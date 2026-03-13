@@ -496,3 +496,32 @@ device (Il dispositivo bersaglio): Indica fisicamente quale partizione vuoi form
     • Non occorre aspettare il termine dell’esecuzione prima di lanciarlo
       nuovamente
     • Unix/Linux è multi-processo (multitasking)
+** Canali (dispositive/file) standard
+     Ogni processo Unix/Linux ha accesso ad almeno TRE canali/file:
+       • Standard input (stdin)
+       • Standard output (stdout)
+       • Standard error (stderr)
+*** stdin: flusso dati in ingresso
+        • default: tastiera
+        • descrittore file: 0
+*** stdout: flusso dati in uscita
+        • default: schermo
+        • descrittore file: 1
+*** stderr: per eventuali messaggi di errore/diagnostica
+        • default: schermo
+        • descrittore file: 2
+    I tre canali possono essere ridirezionati indipendentemente
+** Ridirezione dei canali standard
+   • I simboli > e < sono utilizzati per ridirezionare standard
+     input/output/error di un comando da/su file
+   • Vedi relativa sezione in man bash
+   • Ad esempio:
+      • ls > dirlist (stdout di lsridirezionato sul file dirlist)
+      • ls > dirlist 2>&1 (stdout di lsridirezionato su dirlist, stderr (2)
+        ridirezionato su stdout (1). Quindi sia standard error sia standard output sono
+        ridirezionati su dirlist.)
+      • ls 2>&1 > dirlist (standard error (2) ridirezionato su stdout (1).
+        Standard output di ls ridirezionato su dirlist dopo che stderr è stato
+        ridirezionato e quindi dirlist contiene solo lo standard output di ls.) [La
+        ridirezione non è transitiva.]
+** Rappresentazione dei processi
