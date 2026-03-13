@@ -1,0 +1,498 @@
+#+TITLE: Documentazione SO2
+#+AUTHOR: Diego Albani
+#+OPTIONS: toc:2
+* Shell Utenti FileSystem   SPC m i b(block)    yy(copia), p(incolla)
+    cp,ps,ls
+** ps -p $$ -ocmd -h
+    ps (Process Status)
+    -p (Filtra la porta)
+    $$ (variabile speciale della shell che contiene il PID)
+    -o (Permette di specificare un formato di output personalizzato)
+    cmd (mostra il nome del comando che è stato usato per lanciare quel processo con tutti i sui argomenti
+    -ocmd (Di questo processo voglio veder solo il nome del comando che lo ha generato)
+    -h (No header)
+** ps -p $$ -opid -h
+    pid (mostra il process id della shell)
+* Gestione utenti
+** Mostra utenti
+    $ cut /etc/passwd
+    output: (nome_utente,password_criptata,UID,GID,commento,home_directory,shell)
+** Creazione di altri utenti
+    $ adduser nuovo_utente (di default non appartiene al gruppo sudo)
+** Eliminiare utenti
+    $ sudo deluser nome_utente
+** Cambiare utente
+    $ su [- | -l | --login] nome_utente
+    $ Per diventare Root -> $ su -| su - root | su -l root
+** Rendere utente sudoer
+    $ sudo usermod -aG sudo nome_utente
+** Rimuovere utente sudoer
+    $ sudo deluser nome_utente sudo
+** Esercizio apt-get update
+    Utente Principale (sudoer di deafult) -> $ apt-get update (Permesso Negato)
+    Utente Principale (sudoer) -> $ sudo apt-get update (ok)
+
+    Utente1 -> apt-get update (Permesso Negato)
+    Utente1 -> sudo apt-get update (Scusa Utente1. Non posso farlo)
+
+    Utente1 (sudoer) -> $ apt-get update (Permesso Negato)
+    Utente1 (sudoer) -> $ sudo apt-get update (ok)
+* FileSystem
+** Directory corrente
+    $ pwd
+** Crea nuova directory
+    $ mkdir nome_cartella
+    $ mkdir -p dir11/dir12/dir13
+** Path assoluto VS relativo
+    • Path assoluto è valido qualunque sia la cwd
+    • Path relativo può non essere valido quando si cambia cwd
+** Contenuto di una directory
+    $ ls [ -a | --all ] (visualizza i file nascosti)
+    $ ls -R nome_directory
+    $ tree [-a] [-L maxdepth] [-d] [-x] [nomedir]
+** Crea nuovo file
+    $ touch nome_file
+** Modificare contenuto file
+    $ gedit, nano, pico, vi nome_file
+* Mounting
+    • Una qualsiasi directory D dell'albero gerarchico può diventare il punto
+      di mount per un altro (nuovo) filesystem F se e solo se la directory
+      root di F diventa accessibile da D
+    • Se D è vuota, dopo il mount conterrà F
+    • Se D non è vuota, dopo il mount conterrà F ma ciò non significa che i dati che
+      vi erano dentro sono persi… saranno di nuovo accessibili dopo l’unmount di F
+    • Una qualsiasi directory dell'albero gerarchico può diventare il punto di
+      mount per un altro (nuovo) filesystem
+
+    $ mount (visualizza fs correttamente montati)
+    $ cat /etc/mtab (visualizza fs montati)
+    $ cat /etc/fstab (visualizza fs montati all'avvio, bootstrap)
+* File passwd e group
+    $ cat /etc/passwd (contiene tutti gli utenti)
+    $ cat /etc/group (contiene tutti i gruppi)
+    + passwd ha la seguente struttura
+      • username:password:uid:gid:gecos:homedir:shell
+      • al posto della password potete notare una x (cifrata)
+    + group ha la seguente struttura
+      • groupname:password:groupID:lista utenti
+* I file
+    • Ogni file nel filesystem è rappresentato da una struttura dati inode ed è univocamente
+      identificato da un inode number
+    • La cancellazione di un file libera l’inode number che verrà riutilizzato quando necessario
+      per un nuovo file
+
+    #+BEGIN_SRC bash
+     diegospillo@diegoubuntu:~/prova$ ls -l file1.txt
+     -rw-rw-r-- 1 diegospillo diegospillo 0 Mar  8 14:41 file1.txt
+     #+END_SRC
+
+    #+BEGIN_SRC bash
+     diegospillo@diegoubuntu:~/prova$ ls -i file1.txt
+     1072892 file1.txt (inode number)
+    #+END_SRC
+
+    #+BEGIN_SRC bash
+     diegospillo@diegoubuntu:~/prova$ ls -n file1.txt
+     -rw-rw-r-- 1 1000 1000 0 Mar  8 14:41 file1.txt
+    #+END_SRC
+* Permessi
+    + drwxr-xr-x
+      d: Type
+      rwx: User
+      r-x: Group
+      r-x: Others
+** Permessi di accesso a directory
+    Permesso Ottale Significato
+    --- 0 Non si può fare niente
+    --x 1 Si può impostare come cwd (ma solo se il permesso c'è per tutte le directory nel
+          path); si può anche “attraversare", se già se ne conosce il contenuto
+    -w- 2 Non si può fare niente
+    -wx 3 Come il permesso 7, ma non si può elencare il contenuto
+    r-- 4 Solo elencare il contenuto (senza vedere attributi file), non può essere «attraversata»
+    r-x 5 Si può leggere (attributi compresi), impostare come cwd ed attraversare; non è
+          possibile cancellare o aggiungere file/directory
+    rw- 6 Come il permesso 4
+    rwx 7 Elencare contenuto (attributi compresi), aggiungere file e directory, cancellare file
+          contenuti in essa (anche senza avere il permesso di scrittura sul file! Correggibile
+          con lo sticky bit, vedere più avanti), cancellare directory contenute in essa (ma
+          occorrono tutti i permessi su tali directory)
+** Permessi speciali
+  • Se il permesso di esecuzione c'è, allora la s o la t saranno minuscoli,
+    altrimenti saranno Maiuscoli
+*** Sticky bit (t)
+     • Inutile sui file
+     • Applicato su directory corregge il comportamento di w+x
+       permettendo la cancellazione di file solo se si hanno permessi di scrittura
+       su di essi
+*** Setuid bit (s)
+     • Si usa solo per i file eseguibili
+       + Quando i file vengono eseguiti, i privilegi che ha il processo non sono quelli dell'
+         utente che esegue il file, bensì quelli dell'utente proprietario del file
+       + Se il proprietario è il root, viene eseguito con privilegi di root,
+         inpipendentemente da chi lo ha eseguito
+*** Setgid bit (s)
+     • Analogo di setuid ma con i gruppi
+       + i privilegi sono quelli del gruppo che è proprietario del file eseguibile
+     • Può essere applicato anche ad una directory, e allora ogni file creato lì
+       dentro ha il gruppo della directory, anziché quello primario di chi crea i files
+** Il Concetto di Permesso (Lettura vs Modifica)
+In Linux, i comandi si dividono in base all'impatto che hanno sul sistema.
+
+| Comando | Privilegi Richiesti   | Azione (Cosa fa davvero)                                                |
+|---------+-----------------------+-------------------------------------------------------------------------|
+| adduser | Amministratore (sudo) | Modifica file critici (/etc/passwd) e crea nuove cartelle.Rischio alto. |
+| groups  | Utente Normale        | Legge semplicemente le informazioni pubbliche. Nessuna modifica.        |
+
+*** La Regola d'Oro di Linux:
+Tutto ciò che cambia le impostazioni globali o tocca file fuori dalla tua cartella personale (/home/tuo_nome) richiede ~sudo~. Tutto ciò che si limita a curiosare, no.
+** Comando chmod
+    • Cambia la modalità (diritti) di accesso a file o directory
+    #+BEGIN_SRC bash
+     $ chmod 0640 nome_file
+    #+END_SRC
+    il 1° numero => setuid(4), setgid(2), sticky(1)
+    il 2° numero => utente
+    il 3° numero => gruppo
+    il 4° numero => altri
+    • Si possono fornire 3 numeri se si assume setuid, setgid e sticky impostati a 0
+*** Modalità simbolica
+    [ugoa] [+-=] [perms...]
+    + Dove perms è
+      • zero
+      • una o più lettere nell'insieme {rxwXst}
+      • oppure una lettera nell'insieme {ugo}
+*** Esercizi
+1) creare un file e, usando la modalità ottale, impostarne i permessi a
+• rw- r-- r–-
+poi a
+• rws r-S -w-
+ed infine a
+• rwx r-- -wT
+
+#+BEGIN_SRC bash
+diegospillo@diegoubuntu:~/prova$ chmod 644 file1.txt
+diegospillo@diegoubuntu:~/prova$ ls -l file1.txt
+-rw-r--r-- 1 diegospillo diegospillo 0 Mar  8 14:41 file1.txt
+#+END_SRC
+
+#+BEGIN_SRC bash
+diegospillo@diegoubuntu:~/prova$ chmod 2742 file1.txt
+diegospillo@diegoubuntu:~/prova$ ls -l file1.txt
+-rwxr-S-w- 1 diegospillo diegospillo 0 Mar  8 14:41 file1.txt
+#+END_SRC
+
+#+BEGIN_SRC bash
+diegospillo@diegoubuntu:~/prova$ chmod 1742 file1.txt
+diegospillo@diegoubuntu:~/prova$ ls -l file1.txt
+-rwxr---wT 1 diegospillo diegospillo 0 Mar  8 14:41 file1.txt
+#+END_SRC
+
+2)Creare un file e, usando la modalità simbolica, impostarne i permessi a
+• rws r-S -w- e poi a
+• rwx r-- -wT
+#+BEGIN_SRC bash
+  diegospillo@diegoubuntu:~/prova$ chmod u=rwx,g=r,o=w file.txt
+  diegospillo@diegoubuntu:~/prova$ chmod ug+s file.txt
+  diegospillo@diegoubuntu:~/prova$ ls -l file.txt
+  -rwsr-S-w- 1 diegospillo diegospillo 0 Mar  8 16:56 file.txt
+  diegospillo@diegoubuntu:~/prova$ chmod ug-s file.txt
+  diegospillo@diegoubuntu:~/prova$ chmod o+t file.txt
+  diegospillo@diegoubuntu:~/prova$ ls -la file.txt
+   -rwxr---wT 1 diegospillo diegospillo 0 Mar  8 16:56 file.txt
+#+END_SRC
+** Comando umask
+    Imposta la maschera dei file a mode; ovvero i diritti di accesso al file o alle
+    directory nel momento della loro creazione
+
+    Diritti accesso directory = 0777 AND NOT(umask)
+    Diritti accesso file = 0666 AND NOT(umask)
+
+    Gli attributi speciali non sono impostati (0 = 000)
+
+    Per i file il diritto di esecuzione(x) non viene impostato
+    (quindi le opzioni speciali non hanno effetto)
+*** Esercizio
+    1)  modificare l'umask in modo che, sia che venga creata una
+directory sia un file, i permessi siano 664. Dopodiché, modificare
+nuovamente in modo che il permesso per una nuova directory sia 775 e
+per un file sia 664
+
+permesso 664 directory
+#+BEGIN_SRC bash
+  diegospillo@diegoubuntu:~/prova$ umask 113
+  diegospillo@diegoubuntu:~/prova$ mkdir dirumask
+  diegospillo@diegoubuntu:~/prova$ ls -l
+  total 1
+  drw-rw-r-- 2 diegospillo diegospillo 4096 Mar 11 16:42 dirumask
+#+END_SRC
+
+permesso 664 file
+#+BEGIN_SRC bash
+  diegospillo@diegoubuntu:~/prova$ umask 002
+  diegospillo@diegoubuntu:~/prova$ touch umaskfile.txt
+  diegospillo@diegoubuntu:~/prova$ ls -l
+  total 1
+  -rw-rw-r-- 1 diegospillo diegospillo    0 Mar 11 16:50 umaskfile.txt
+#+END_SRC
+
+permessi 775 directory e 664 file
+#+BEGIN_SRC bash
+  diegospillo@diegoubuntu:~/prova$ umask 002
+  diegospillo@diegoubuntu:~/prova$ mkdir dirumask2
+  diegospillo@diegoubuntu:~/prova$ touch umaskfile.txt
+  diegospillo@diegoubuntu:~/prova$ ls -l
+  total 4
+  drwxrwxr-x 2 diegospillo diegospillo 4096 Mar 11 17:03 dirumask2
+  -rw-rw-r-- 1 diegospillo diegospillo    0 Mar 11 17:03 umaskfile.txt
+#+END_SRC
+* Comandi Principali
+** cp [-r] [-i] [-a] [-u] {filesorgenti} filedestinazione
+    • -r recursive per directory
+    • -i interactive per essere avvisati in caso di sovrascrizione
+    • -u la sovrascrittura avviene solo se l'mtime del sorgente e più recente di
+         quello della destinazione
+   • -r recursive per directory
+   • -i interactive per essere avvisati in caso di sovrascrizione
+   • -u la sovrascrittura avviene solo se l'mtime del sorgente e più recente di
+        quello della destinazione
+*** esercizio 2
+   #+BEGIN_SRC bash
+diegospillo@diegoubuntu:~/prova$ touch file2.txt
+diegospillo@diegoubuntu:~/prova$ cp -i file2.txt sub
+diegospillo@diegoubuntu:~/prova$ ls
+file1.txt  file2.txt  sub
+diegospillo@diegoubuntu:~/prova$ cd sub
+diegospillo@diegoubuntu:~/prova/sub$ ls
+file1.txt  file2.txt
+diegospillo@diegoubuntu:~/prova/sub$ cd ..
+diegospillo@diegoubuntu:~/prova$ ls
+file1.txt  file2.txt  sub
+diegospillo@diegoubuntu:~/prova$ cp -i file2.txt sub
+cp: sovrascrivere 'sub/file2.txt'? yes
+
+   #+END_SRC
+*** esercizio 3
+
+senza [-a]
+#+BEGIN_SRC bash
+diegospillo@diegoubuntu:~/prova$ chmod o+wx file.txt
+diegospillo@diegoubuntu:~/prova$ ls -la
+total 12
+drwxrwxr-x  3 diegospillo diegospillo 4096 Mar 13 13:26 .
+drwxr-x--- 18 diegospillo diegospillo 4096 Mar 13 13:26 ..
+-rw-rw-rwx  1 diegospillo diegospillo    0 Mar 13 13:26 file.txt
+drwxrwxr-x  2 diegospillo diegospillo 4096 Mar 13 13:26 sub
+diegospillo@diegoubuntu:~/prova$ cp file.txt sub
+diegospillo@diegoubuntu:~/prova$ cd sub
+diegospillo@diegoubuntu:~/prova/sub$ ls -la
+total 8
+drwxrwxr-x 2 diegospillo diegospillo 4096 Mar 13 13:28 .
+drwxrwxr-x 3 diegospillo diegospillo 4096 Mar 13 13:26 ..
+-rw-rw-r-x 1 diegospillo diegospillo    0 Mar 13 13:28 file.txt
+#+END_SRC
+
+con [-a]
+#+BEGIN_SRC bash
+diegospillo@diegoubuntu:~/prova$ cp -a file.txt sub
+diegospillo@diegoubuntu:~/prova$ cd sub
+diegospillo@diegoubuntu:~/prova/sub$ ls -la
+total 8
+drwxrwxr-x 2 diegospillo diegospillo 4096 Mar 13 13:31 .
+drwxrwxr-x 3 diegospillo diegospillo 4096 Mar 13 13:31 ..
+-rw-rw-rwx 1 diegospillo diegospillo    0 Mar 13 13:26 file.txt
+#+END_SRC
+** mv [-i] [-u] [-f] {filesorgenti} filedestinazione
+   • Sposta un file (o lo rinomina)
+   • -i e -u hanno stesso significato di cp
+   • -f force è il default
+** rm [-f] [-i] [-r] {file}
+   • -f forza la cancellazione (senza chiedere)
+   • -r recursive
+   • -i interactive
+*** esercizio 5
+    #+BEGIN_SRC bash
+diegospillo@diegoubuntu:~/prova$ touch file.txt
+diegospillo@diegoubuntu:~/prova$ ls -i file.txt
+1311323 file.txt
+diegospillo@diegoubuntu:~/prova$ rm file.txt
+diegospillo@diegoubuntu:~/prova$ touch file1.txt
+diegospillo@diegoubuntu:~/prova$ ls -i file1.txt
+1311323 file1.txt
+    #+END_SRC
+** ln [-s] sorgente [destinazione]
+    • Soft/symbolic e hard link
+    • Un link lin1 ad un file f1 è un nuovo file lin1 che punta ad f1
+      senza contenere in esso il contenuto di f1 (permette di risparmiare spazio)
+    • Default hard link; -s soft link
+    • Negli hard link non c'è il concetto di puntatore e puntato
+*** Definizione
+Permettono di accedere alle stesse informazioni da posizioni diverse senza
+doverle duplicare, risparmiando così moltissimo spazio sul disco rispetto
+a una classica copia (che si farebbe con il comando cp).
+
+Per essere precisissimi in base ai due tipi di link che abbiamo visto prima:
+
+Nel caso del Soft Link (Simbolico): lin1 è a tutti gli effetti un "nuovo file" speciale,
+                                    estremamente leggero (pochi byte), che non contiene
+                                    i dati originali ma solo il percorso (la "strada")
+                                    per raggiungere f1.
+
+Nel caso dell'Hard Link (Fisico): in questo caso lin1 non è nemmeno un vero e proprio
+                                  "nuovo file" fisico, ma piuttosto un secondo nome o
+                                  una nuova "etichetta" assegnata direttamente ai dati
+                                  di f1 già presenti sul disco.
+
+Se f1 è un video da 5 GB, creando lin1 (sia hard che soft) non occuperai altri 5 GB.
+Il peso sul disco rimarrà praticamente invariato
+** touch [-a] [-m] [-t timestamp] {file}
+    • Serve per modificare i timestamps («marcature/timbri temporali») di
+      un file … e se il file non esiste lo crea
+    • Può essere applicato anche su directory
+    • -t imposta il timestamp desiderato
+** du [-c] [-s] [-a] [-h] [--exclude=PATTERN] [files...]
+Il comando base du calcola e mostra lo spazio su disco utilizzato dai file e dalle
+directory che gli indichi.(che sta per Disk Usage)
+Se non gli passi nessun file, calcola lo spazio della cartella in cui ti trovi
+in quel momento.
+
+Ecco la spiegazione delle opzioni (i flag):
+
+-h (human-readable): È in assoluto l'opzione più usata e utile.
+                     Invece di mostrarti lo spazio in "blocchi" o byte
+                     (che sono difficili da leggere), formatta i numeri in un
+                     formato comprensibile per gli umani:
+                     Kilobyte (K), Megabyte (M) o Gigabyte (G).
+                     Esempio: du -h mio_video.mp4 ti dirà 1.5G invece di
+                     un numero lunghissimo.
+
+-s (summarize): Se usi du su una cartella piena di roba,
+                lui di base ti elencherà lo spazio occupato da ogni singola sottocartella.
+                Se usi -s, ti darà invece solo un unico numero:
+                il totale riassuntivo (il "sommario") di quella cartella,
+                senza riempirti lo schermo.
+
+-c (produce a grand total): Se gli chiedi di controllare più cartelle o file
+                            contemporaneamente, alla fine dell'elenco aggiungerà
+                            una comoda riga chiamata "totale" (total) che somma
+                            tutto quanto.
+
+-a (all): Di default, du mostra solo le dimensioni delle directory (le cartelle).
+          Aggiungendo -a, gli dici di stampare a schermo anche la dimensione di tutti
+          i singoli file che trova, non solo delle cartelle.
+
+--exclude=PATTERN: Ti permette di escludere dei file specifici dal calcolo.
+                   Ad esempio, se vuoi sapere quanto pesa una cartella ma vuoi
+                   ignorare tutti i file .mp4, scriverai: du --exclude="*.mp4"
+** df [-h] [-l] [-i] [file]
+    Se du ti serve per capire quanto spazio occupano i tuoi file e le tue cartelle,
+    df ti mostra il quadro generale: ti dice quanto spazio totale,
+    usato e libero c'è sui tuoi dischi (o per essere più precisi, sui tuoi file system).
+    Ecco cosa fanno le opzioni che hai elencato:
+
+-h (human-readable): Esattamente come per du, questa è l'opzione salva-vita.
+                     Invece di mostrarti lo spazio in incomprensibili blocchi da
+                     1 Kilobyte, formatta i numeri in Megabyte (M), Gigabyte (G) o
+                     Terabyte (T).
+
+-l (local): Se sei su un computer o un server connesso a una rete aziendale,
+            potresti avere "montati" (collegati) dei dischi di rete (es. NFS o Samba).
+            Usando -l, dici a df di ignorare i dischi di rete e mostrarti solo
+            le partizioni fisicamente presenti sul tuo computer locale.
+
+-i (inodes): Questa è un'opzione molto tecnica e interessante.
+             Invece di misurare i Gigabyte, misura gli inode.
+             Ricordi quando abbiamo parlato degli hard link?
+             Ogni disco ha un numero massimo di "spazi" (inode) per registrare
+             l'esistenza di un file.
+             Se hai milioni di file minuscoli da 1 byte, potresti finire gli inode
+             prima di finire i Gigabyte! Con -i vedi quanti file/inode puoi ancora
+             creare su quel disco.
+
+[file]: Se digiti semplicemente df, vedi tutti i dischi collegati. Se invece scrivi
+        df /percorso/del/mio/file.txt, il comando ti mostrerà solo le informazioni
+        relative alla specifica partizione del disco su cui è salvato quel file.
+** dd [opzioni]
+A differenza di cp, che è pensato per copiare i "file" (quindi capisce le cartelle,
+i permessi, ecc.), dd lavora a un livello molto più basso:
+prende i dati crudi (byte per byte o blocco per blocco) e li riversa da una parte
+all'altra, ignorando completamente cosa siano.
+
+Ecco la spiegazione dettagliata delle sue opzioni (che, come hai giustamente notato,
+usano una sintassi unica variabile=valore invece dei classici trattini -):
+
+I fondamenti di dd:
+   * if= (Input File): È la tua sorgente. Da dove prendi i dati? Può essere un normale
+                       file di testo, ma la vera potenza di dd è che l'input può
+                       essere un intero hard disk (es. if=/dev/sda) o un lettore CD.
+                       Se non lo metti, aspetta che tu scriva qualcosa sulla tastiera.
+
+   * of= (Output File): È la tua destinazione. Dove butti i dati letti? Anche qui,
+                        può essere un file, oppure un'intera chiavetta USB
+                        (es. of=/dev/sdb).
+
+Le opzioni "sofisticate" (Controllo dei Blocchi):
+
+   * bs= (Block Size): Definisce quanto dev'essere grande il "cucchiaio" con cui
+                       sposti i dati. Di default sposta 512 byte alla volta, il che
+                        è lentissimo per file grandi. Impostando ad esempio bs=4M,
+                        gli dici di leggere e scrivere blocchi da 4 Megabyte alla volta,
+                        velocizzando enormemente il processo.
+
+   * count= : Ti permette di fermare la copia dopo un certo numero di blocchi.
+              Se hai bs=1M e count=10, dd copierà esattamente 10 Megabyte e poi si fermerà.
+              È utilissimo per estrarre solo un pezzetto iniziale di un file o di un disco.
+
+   * conv= (Piccola correzione): Nel manuale e nei comandi pratici la variabile si chiama
+                                 conv (non convert). Oltre alle conversioni
+                                 maiuscolo/minuscolo (conv=ucase), è fondamentale
+                                 per le copie di dischi danneggiati.
+                                 Usando ad esempio conv=noerror,sync, dici a dd:
+                                 "se trovi un settore rotto sul disco, non fermarti
+                                 (noerror), ma riempi quel blocco vuoto con degli
+                                 zeri (sync) per mantenere le proporzioni del file".
+** mkfs [-t type fsoptions] device
+mkfs sta per Make File System. In parole povere, nel mondo Windows diremmo che è
+il comando che serve per formattare un disco o una partizione.
+
+Per usare un'analogia: immagina la tua partizione grezza come un enorme magazzino
+completamente vuoto. Se ci butti dentro i dati a caso, il sistema operativo non saprà
+mai come ritrovarli.
+Il comando mkfs è come una squadra di operai che entra nel magazzino,
+costruisce gli scaffali, mette le etichette e crea un catalogo (il File System).
+Da quel momento in poi, Linux saprà esattamente come organizzare, salvare e leggere
+i tuoi file lì dentro.
+
+Ecco la spiegazione dettagliata della sintassi che hai scritto:
+
+I componenti del comando
+-t type (Tipo di File System): È l'opzione fondamentale. Devi dire a Linux come vuoi
+                                organizzare quegli scaffali. I tipi più comuni sono:
+
+               * ext4: Il file system standard e più usato per i dischi interni di Linux.
+
+               * vfat (o fat32): Perfetto per le chiavette USB, perché è leggibile sia da
+                               Linux, che da Windows, che da macOS.
+
+               * ntfs: Il formato standard di Windows.
+
+fsoptions (Opzioni specifiche): Ogni tipo di file system ha le sue opzioni aggiuntive.
+                                Ad esempio, una delle più usate è assegnare un'etichetta
+                                (un nome) al disco appena formattato.
+                                Se formatti in ext4, l'opzione potrebbe essere qualcosa
+                                come -L "MioDisco".
+
+device (Il dispositivo bersaglio): Indica fisicamente quale partizione vuoi formattare.
+                                   Esempi classici sono
+                                   /dev/sda1 (la prima partizione del primo disco) o
+                                   /dev/sdb1 (magari la tua chiavetta USB).
+* I Processi
+    In Unix/Linux le due entità fondamentali sono:
+      * File -  descrivono/rappresentano risorse, contengono dati e programmi
+      * Processi -  permettono di elaborare dati e usare le risorse di sistema
+    Processo = file eseguibile (programma) in esecuzione
+
+    • Un file eseguibile può essere eseguito più volte dando vita ad un
+      nuovo processo ogni volta
+    • Non occorre aspettare il termine dell’esecuzione prima di lanciarlo
+      nuovamente
+    • Unix/Linux è multi-processo (multitasking)
