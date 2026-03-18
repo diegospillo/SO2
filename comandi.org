@@ -525,3 +525,164 @@ device (Il dispositivo bersaglio): Indica fisicamente quale partizione vuoi form
         ridirezionato e quindi dirlist contiene solo lo standard output di ls.) [La
         ridirezione non è transitiva.]
 ** Rappresentazione dei processi
+*** Process IDentifier (PID)
+    • E’ un identificatore (numero intero) univoco di un processo
+    • In un dato istante, non ci possono essere 2 processi con lo stesso PID
+    • Una volta che un processo è terminato, il suo PID viene liberato, e
+      potrebbe essere prima o poi riusato per un altro processo
+    • Alcuni sistemi, Linux incluso, assegnano PID casuali ai processi per
+      incrementare la sicurezza. [Ad esempio: in un sistema parzialmente
+      compromesso, un attacco al processo web server dovrebbe prima di tutto
+      scoprire il PID di tale processo.]
+    • Nell’ultima decade aumento dell’uso della casualità (randomness) nei
+      sistemi operativi per ridurne (mitigate) la superficie d’attacco
+*** Process Control Block (PCB)
+     PCB è unico per ogni processo
+     * PID: Process Indentifier
+     * PPID: Parent Process Identifier
+     • Real UID: Real User Identifier
+     • Real GID: Real Group ID
+     * Effective UID: Effective User Identifier (UID assunto dal processo in esecuzione)
+     • Effective GID: Effective Group ID (come sopra per GID)
+     * Saved UID: Saved User Identifier (UID avuto prima dell’esecuzione del SetUID)
+     • Saved GID: Saved Group Identifier (come sopra per GID)
+     • Current Working Directory: directory di lavoro corrente
+     • Umask: file mode creation mask
+     • Nice: priorità statica del processo
+**** Saved UID: Saved User Identifier
+     Permette ad un processo che gira come root (ad es. via setuid sull’eseguibile)
+     di fare operazioni come utente non-privilegiato e poi ritornare ai privilegi di root:
+     • Ad es: il processo crea dei file che apparterranno all’utente non-privilegiato
+       (altrimenti apparterrebbero a root)
+     • E’ buona regola per la sicurezza di usare i privilegi di root solo quando
+*** Sei aree di memoria
+**** Text Segment
+     Istruzioni da eseguire (in linguaggio macchina)
+**** Data Segment
+     Dati statici (variabili globali e variabili locali static) inizializzati
+     Alcune costanti di ambiente
+**** BSS (Block Started from Symbol)
+     Dati statici non inizializzati
+     La distinzione dal segmento dati si fa per motivi hardware
+**** Heap
+     Dati dinamici (allocati con malloc e simili)
+**** Stack
+     Per le chiamate a funzioni, con i corrispondenti dat dinamici
+     (parametri, variabili locali non static)
+**** Memory Mapping Segment
+     Tutto ciò che riguarda librerie esterne dinamiche usate dal processo,
+     nonché estensione dello heap in alcuni casi
+**** Aree di memoria potrebbero essere condivise:
+    + il text segment tra più istanze dello stesso processo
+    + due processi potrebbero avere lo stesso BSS o Data segment o MMS
+    + lo stack non è mai condiviso
+*** Stati di un processo
+**** Running (R)
+     in esecuzione su un processore
+**** Runnable (R)
+     -pronto per essere eseguito (non è in attesa di nessun evento)
+     -in attesa che lo scheduler lo (ri)selezioni per l'esecuzione
+**** Sleep (S)
+     è in attesa di un qualche evento (ad esempio, lettura di blocchi dal disco),
+     e non può quindi essere scelto dallo scheduler
+**** Zombie ( Z)
+     il processo è terminato e le sue 6 aree di memoria non sono più in memoria;
+     tuttavia, il suo PCB viene ancora mantenuto dal kernel perchè il processo padre
+     non ha ancora richiesto il suo "exit status"
+**** Stopped (T)
+     caso particolare di sleep: avendo ricevuto un segnale STOP, è in attesa di un
+     segnale CONT
+**** Traced (t)
+     in esecuzione di debug, oppure in generale in attesa di un segnale
+     (altro caso particolare di sleep)
+**** Uninterruptible sleep (D)
+     come sleep, ma tipicamente sta facendo operazioni di I/O su dischi lenti
+     e non può essere interrotto o ucciso
+*** Modalità di Esecuzione dei processi
+**** Foreground (in primo piano)
+     * tutti i casi visti finora
+     * il comando può leggere l'input da tastiera e scrivere su schermo
+     * finchè non termina, il prompt non viene restituito e non si possono lanciare altri comandi alla shell
+**** Background (in sottofondo)
+     * il comando non può leggere l'input da tastiera ma può scrivere su schermo
+     * il prompt viene immediatamente restituito
+     * mentre il lavoro viene eseguito in background, si possono da subito dare altri comandi alla shell
+     con il comando & finale
+#+BEGIN_SRC bash
+diegospillo@diegoubuntu:~$ sleep 15s
+^C
+diegospillo@diegoubuntu:~$ sleep 15s &
+[1] 3894
+diegospillo@diegoubuntu:~$
+[1]+  Completato              sleep 15s
+#+END_SRC
+     3894 è in numero del job (partono da 1) e PID
+     • Provate a lanciare 3 volte di seguito sleep 20s &
+     • Cosa succede al numero del job?
+#+BEGIN_SRC bash
+diegospillo@diegoubuntu:~$ sleep 20s &
+[1] 3917
+diegospillo@diegoubuntu:~$ sleep 20s &
+[2] 3919
+diegospillo@diegoubuntu:~$ sleep 20s &
+[3] 3921
+#+END_SRC
+     aumenta +=2
+**** Lista di job  'jobs [-l] [-p]'
+#+BEGIN_SRC bash
+diegospillo@diegoubuntu:~$ sleep 30s &
+[1] 3925
+diegospillo@diegoubuntu:~$ sleep 30s &
+[2] 3927
+diegospillo@diegoubuntu:~$ jobs -l
+[1]-  3925 In esecuzione           sleep 30s &
+[2]+  3927 In esecuzione           sleep 30s &
+diegospillo@diegoubuntu:~$ jobs -p
+3925
+3927
+diegospillo@diegoubuntu:~$
+[1]-  Completato              sleep 30s
+[2]+  Completato              sleep 30s
+#+END_SRC
+
+    Se un lavoro è composto da più compiti (pipelining)
+#+BEGIN_SRC bash
+diegospillo@diegoubuntu:~$ sleep 30s | sleep 20s | sleep 10s &
+[1] 3947
+diegospillo@diegoubuntu:~$ jobs -l
+[1]+  3945 In esecuzione           sleep 30s
+      3946                       | sleep 20s
+      3947                       | sleep 10s &
+#+END_SRC
+**** Comandi bg e fg
+   • Comandi di bash (vedi man bash)
+   • bg porta un processo in background
+   • lancio processo; lo interrompo con CTRL+z; lo risveglio con bg
+   • fg%n dove %n è il numero del
+     job, lo riporta in foreground
+   • bg%n porta in background il
+     processo %n
+#+BEGIN_SRC bash
+diegospillo@diegoubuntu:~/SO2$ cd ..
+diegospillo@diegoubuntu:~$ sleep 60s
+^Z
+[1]+  Fermato                 sleep 60s
+diegospillo@diegoubuntu:~$ bg
+[1]+ sleep 60s &
+diegospillo@diegoubuntu:~$ sleep 60s
+^Z
+[2]+  Fermato                 sleep 60s
+diegospillo@diegoubuntu:~$ bg
+[2]+ sleep 60s &
+diegospillo@diegoubuntu:~$ fg 1
+sleep 60s
+#+END_SRC
+*** Pipelining dei comandi
+    stdin => (comando1) stdout => (comando2) stdout ==> ... stdin ==> (comandoN) stdout ==>
+    * Una «catena di montaggio» per creare comandi complessi usando comandi più semplici
+    * Per eseguire un job composto da più comandi
+         comando1 | comando2 | ... comando n
+    * Lo standard output di un comando i diventa i'input del comando i+1
+    * Se uso |& è lo standard error (stderr) che viene ridirezionato sullo standard input
+      del comando successivo
+    * il comando i+1 non deve necessariamente usare l'output/stderr del comando i
