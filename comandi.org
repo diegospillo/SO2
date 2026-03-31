@@ -677,6 +677,54 @@ diegospillo@diegoubuntu:~$ bg
 diegospillo@diegoubuntu:~$ fg 1
 sleep 60s
 #+END_SRC
+    * Si possono identificare job anche con:
+      + %prefix: dove prefixe la parte iniziale del comando del job desiderato;
+      + %+ oppure %%: l'ultimo job mandato
+      + %-: il penultimo job mandato
+**** Comando ps [opzioni] [pid...]
+     • Mostra le informazioni dei processi in esecuzione
+     • Legge le informazioni dai file virtuali in /proc
+     • ps senza argomenti mostra i processi dell’utente attuale lanciati
+       dalla shell corrente
+     • Per ogni processo mostra
+       PID, TTY, TIME e CMD
+#+BEGIN_SRC bash
+diegospillo@diegoubuntu:~$ ps
+    PID TTY          TIME CMD
+   3458 pts/2    00:00:00 bash
+   3790 pts/2    00:00:00 ps
+diegospillo@diegoubuntu:~$ sleep 60s &
+[1] 3795
+diegospillo@diegoubuntu:~$ sleep 80s &
+[2] 3797
+diegospillo@diegoubuntu:~$ ps
+    PID TTY          TIME CMD
+   3458 pts/2    00:00:00 bash
+   3795 pts/2    00:00:00 sleep
+   3797 pts/2    00:00:00 sleep
+   3799 pts/2    00:00:00 ps
+#+END_SRC
+***** Opzioni ps [-e] [-u] [-p]
+      •-e: tutti i processi di tutti gli utenti lanciati da tutte le shell o al boot
+           (figli del processo 0)
+      •-u{utente, }: tutti i processi degli utenti nella lista
+          • Es: ps -u studente
+      •-p {pid, }: tutti i processi con i PID nella lista
+***** Opzioni ps [-f] [-l] [-o]
+#+BEGIN_SRC bash
+diegospillo@diegoubuntu:~$ ps
+    PID TTY          TIME CMD
+   3317 pts/1    00:00:00 bash
+   5222 pts/1    00:00:00 ps
+diegospillo@diegoubuntu:~$ ps -f
+UID          PID    PPID  C STIME TTY          TIME CMD
+diegosp+    3317    3243  0 14:38 pts/1    00:00:00 /bin/bash
+diegosp+    5224    3317 99 14:56 pts/1    00:00:00 ps -f
+diegospillo@diegoubuntu:~$ ps -l
+F S   UID     PID    PPID  C PRI  NI ADDR SZ WCHAN  TTY          TIME CMD
+0 S  1000    3317    3243  0  80   0 -  3016 do_wai pts/1    00:00:00 bash
+4 R  1000    5226    3317  0  80   0 -  3118 -      pts/1    00:
+#+END_SRC 
 *** Pipelining dei comandi
     stdin => (comando1) stdout => (comando2) stdout ==> ... stdin ==> (comandoN) stdout ==>
     * Una «catena di montaggio» per creare comandi complessi usando comandi più semplici
@@ -686,3 +734,18 @@ sleep 60s
     * Se uso |& è lo standard error (stderr) che viene ridirezionato sullo standard input
       del comando successivo
     * il comando i+1 non deve necessariamente usare l'output/stderr del comando i
+**** Esercizio 1
+   • Lanciare 3 comandi ed interromperli ogni volta con CTRL+z, ad
+     esempio
+   • sleep 60s CTRL+z
+   • ls -R / CTRL+z
+   • sleep 10s CTRL+z
+   • Come faccio a riportare in esecuzione in background ls?
+   • prima cercate di capire come si fa e poi fatelo per evitare che lstermini!!!!
+   • Perché continuo a vedere l’output di ls dopo averlo riportato in
+     esecuzione?
+   • Ovviamente potete scegliere di eseguire 3 comandi a piacere
+     Soluzonione:
+
+     *** Il comnado ls eseguito in bg non prende nulla in input ma mostra ***
+     *** su schermo l'utout e il prompt viene subito restituito ***
