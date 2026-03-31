@@ -4,30 +4,30 @@
 * Shell Utenti FileSystem   SPC m i b(block)    yy(copia), p(incolla)
     cp,ps,ls
 ** ps -p $$ -ocmd -h
-    ps (Process Status)
-    -p (Filtra la porta)
+    - =ps= :: Process Status
+    - =-p= :: Filtra la porta
     $$ (variabile speciale della shell che contiene il PID)
-    -o (Permette di specificare un formato di output personalizzato)
+    - =-o= :: Permette di specificare un formato di output personalizzato
     cmd (mostra il nome del comando che è stato usato per lanciare quel processo con tutti i sui argomenti
-    -ocmd (Di questo processo voglio veder solo il nome del comando che lo ha generato)
-    -h (No header)
+    - =-ocmd= :: Di questo processo voglio veder solo il nome del comando che lo ha generato
+    - =-h= :: No header
 ** ps -p $$ -opid -h
-    pid (mostra il process id della shell)
+    - =pid= :: mostra il process id della shell
 * Gestione utenti
 ** Mostra utenti
-    $ cut /etc/passwd
+    - ~cut /etc/passwd~
     output: (nome_utente,password_criptata,UID,GID,commento,home_directory,shell)
 ** Creazione di altri utenti
-    $ adduser nuovo_utente (di default non appartiene al gruppo sudo)
+    - ~adduser nuovo_utente~ (di default non appartiene al gruppo sudo)
 ** Eliminiare utenti
-    $ sudo deluser nome_utente
+    - ~sudo deluser nome_utente~
 ** Cambiare utente
-    $ su [- | -l | --login] nome_utente
-    $ Per diventare Root -> $ su -| su - root | su -l root
+    - ~su [- | -l | --login] nome_utente~
+    - ~Per diventare Root -> $ su -| su - root | su -l root~
 ** Rendere utente sudoer
-    $ sudo usermod -aG sudo nome_utente
+    - ~sudo usermod -aG sudo nome_utente~
 ** Rimuovere utente sudoer
-    $ sudo deluser nome_utente sudo
+    - ~sudo deluser nome_utente sudo~
 ** Esercizio apt-get update
     Utente Principale (sudoer di deafult) -> $ apt-get update (Permesso Negato)
     Utente Principale (sudoer) -> $ sudo apt-get update (ok)
@@ -39,46 +39,46 @@
     Utente1 (sudoer) -> $ sudo apt-get update (ok)
 * FileSystem
 ** Directory corrente
-    $ pwd
+    - ~pwd~
 ** Crea nuova directory
-    $ mkdir nome_cartella
-    $ mkdir -p dir11/dir12/dir13
+    - ~mkdir nome_cartella~
+    - ~mkdir -p dir11/dir12/dir13~
 ** Path assoluto VS relativo
-    • Path assoluto è valido qualunque sia la cwd
-    • Path relativo può non essere valido quando si cambia cwd
+    - Path assoluto è valido qualunque sia la cwd
+    - Path relativo può non essere valido quando si cambia cwd
 ** Contenuto di una directory
-    $ ls [ -a | --all ] (visualizza i file nascosti)
-    $ ls -R nome_directory
-    $ tree [-a] [-L maxdepth] [-d] [-x] [nomedir]
+    - ~ls [ -a | --all ]~ (visualizza i file nascosti)
+    - ~ls -R nome_directory~
+    - ~tree [-a] [-L maxdepth] [-d] [-x] [nomedir]~
 ** Crea nuovo file
-    $ touch nome_file
+    - ~touch nome_file~
 ** Modificare contenuto file
-    $ gedit, nano, pico, vi nome_file
+    - ~gedit, nano, pico, vi nome_file~
 * Mounting
-    • Una qualsiasi directory D dell'albero gerarchico può diventare il punto
+    - Una qualsiasi directory D dell'albero gerarchico può diventare il punto
       di mount per un altro (nuovo) filesystem F se e solo se la directory
       root di F diventa accessibile da D
-    • Se D è vuota, dopo il mount conterrà F
-    • Se D non è vuota, dopo il mount conterrà F ma ciò non significa che i dati che
+    - Se D è vuota, dopo il mount conterrà F
+    - Se D non è vuota, dopo il mount conterrà F ma ciò non significa che i dati che
       vi erano dentro sono persi… saranno di nuovo accessibili dopo l’unmount di F
-    • Una qualsiasi directory dell'albero gerarchico può diventare il punto di
+    - Una qualsiasi directory dell'albero gerarchico può diventare il punto di
       mount per un altro (nuovo) filesystem
 
-    $ mount (visualizza fs correttamente montati)
-    $ cat /etc/mtab (visualizza fs montati)
-    $ cat /etc/fstab (visualizza fs montati all'avvio, bootstrap)
+    - ~mount~ (visualizza fs correttamente montati)
+    - ~cat /etc/mtab~ (visualizza fs montati)
+    - ~cat /etc/fstab~ (visualizza fs montati all'avvio, bootstrap)
 * File passwd e group
-    $ cat /etc/passwd (contiene tutti gli utenti)
-    $ cat /etc/group (contiene tutti i gruppi)
+    - ~cat /etc/passwd~ (contiene tutti gli utenti)
+    - ~cat /etc/group~ (contiene tutti i gruppi)
     + passwd ha la seguente struttura
-      • username:password:uid:gid:gecos:homedir:shell
-      • al posto della password potete notare una x (cifrata)
+      - username:password:uid:gid:gecos:homedir:shell
+      - al posto della password potete notare una x (cifrata)
     + group ha la seguente struttura
-      • groupname:password:groupID:lista utenti
+      - groupname:password:groupID:lista utenti
 * I file
-    • Ogni file nel filesystem è rappresentato da una struttura dati inode ed è univocamente
+    - Ogni file nel filesystem è rappresentato da una struttura dati inode ed è univocamente
       identificato da un inode number
-    • La cancellazione di un file libera l’inode number che verrà riutilizzato quando necessario
+    - La cancellazione di un file libera l’inode number che verrà riutilizzato quando necessario
       per un nuovo file
 
     #+BEGIN_SRC bash
@@ -117,23 +117,23 @@
           con lo sticky bit, vedere più avanti), cancellare directory contenute in essa (ma
           occorrono tutti i permessi su tali directory)
 ** Permessi speciali
-  • Se il permesso di esecuzione c'è, allora la s o la t saranno minuscoli,
+  - Se il permesso di esecuzione c'è, allora la s o la t saranno minuscoli,
     altrimenti saranno Maiuscoli
 *** Sticky bit (t)
-     • Inutile sui file
-     • Applicato su directory corregge il comportamento di w+x
+     - Inutile sui file
+     - Applicato su directory corregge il comportamento di w+x
        permettendo la cancellazione di file solo se si hanno permessi di scrittura
        su di essi
 *** Setuid bit (s)
-     • Si usa solo per i file eseguibili
+     - Si usa solo per i file eseguibili
        + Quando i file vengono eseguiti, i privilegi che ha il processo non sono quelli dell'
          utente che esegue il file, bensì quelli dell'utente proprietario del file
        + Se il proprietario è il root, viene eseguito con privilegi di root,
          inpipendentemente da chi lo ha eseguito
 *** Setgid bit (s)
-     • Analogo di setuid ma con i gruppi
+     - Analogo di setuid ma con i gruppi
        + i privilegi sono quelli del gruppo che è proprietario del file eseguibile
-     • Può essere applicato anche ad una directory, e allora ogni file creato lì
+     - Può essere applicato anche ad una directory, e allora ogni file creato lì
        dentro ha il gruppo della directory, anziché quello primario di chi crea i files
 ** Il Concetto di Permesso (Lettura vs Modifica)
 In Linux, i comandi si dividono in base all'impatto che hanno sul sistema.
@@ -146,7 +146,7 @@ In Linux, i comandi si dividono in base all'impatto che hanno sul sistema.
 *** La Regola d'Oro di Linux:
 Tutto ciò che cambia le impostazioni globali o tocca file fuori dalla tua cartella personale (/home/tuo_nome) richiede ~sudo~. Tutto ciò che si limita a curiosare, no.
 ** Comando chmod
-    • Cambia la modalità (diritti) di accesso a file o directory
+    - Cambia la modalità (diritti) di accesso a file o directory
     #+BEGIN_SRC bash
      $ chmod 0640 nome_file
     #+END_SRC
@@ -154,20 +154,20 @@ Tutto ciò che cambia le impostazioni globali o tocca file fuori dalla tua carte
     il 2° numero => utente
     il 3° numero => gruppo
     il 4° numero => altri
-    • Si possono fornire 3 numeri se si assume setuid, setgid e sticky impostati a 0
+    - Si possono fornire 3 numeri se si assume setuid, setgid e sticky impostati a 0
 *** Modalità simbolica
     [ugoa] [+-=] [perms...]
     + Dove perms è
-      • zero
-      • una o più lettere nell'insieme {rxwXst}
-      • oppure una lettera nell'insieme {ugo}
+      - zero
+      - una o più lettere nell'insieme {rxwXst}
+      - oppure una lettera nell'insieme {ugo}
 *** Esercizi
 1) creare un file e, usando la modalità ottale, impostarne i permessi a
-• rw- r-- r–-
+- rw- r-- r–-
 poi a
-• rws r-S -w-
+- rws r-S -w-
 ed infine a
-• rwx r-- -wT
+- rwx r-- -wT
 
 #+BEGIN_SRC bash
 diegospillo@diegoubuntu:~/prova$ chmod 644 file1.txt
@@ -188,8 +188,8 @@ diegospillo@diegoubuntu:~/prova$ ls -l file1.txt
 #+END_SRC
 
 2)Creare un file e, usando la modalità simbolica, impostarne i permessi a
-• rws r-S -w- e poi a
-• rwx r-- -wT
+- rws r-S -w- e poi a
+- rwx r-- -wT
 #+BEGIN_SRC bash
   diegospillo@diegoubuntu:~/prova$ chmod u=rwx,g=r,o=w file.txt
   diegospillo@diegoubuntu:~/prova$ chmod ug+s file.txt
@@ -247,13 +247,13 @@ permessi 775 directory e 664 file
 #+END_SRC
 * Comandi Principali
 ** cp [-r] [-i] [-a] [-u] {filesorgenti} filedestinazione
-    • -r recursive per directory
-    • -i interactive per essere avvisati in caso di sovrascrizione
-    • -u la sovrascrittura avviene solo se l'mtime del sorgente e più recente di
+    - -r recursive per directory
+    - -i interactive per essere avvisati in caso di sovrascrizione
+    - -u la sovrascrittura avviene solo se l'mtime del sorgente e più recente di
          quello della destinazione
-   • -r recursive per directory
-   • -i interactive per essere avvisati in caso di sovrascrizione
-   • -u la sovrascrittura avviene solo se l'mtime del sorgente e più recente di
+   - -r recursive per directory
+   - -i interactive per essere avvisati in caso di sovrascrizione
+   - -u la sovrascrittura avviene solo se l'mtime del sorgente e più recente di
         quello della destinazione
 *** esercizio 2
    #+BEGIN_SRC bash
@@ -302,13 +302,13 @@ drwxrwxr-x 3 diegospillo diegospillo 4096 Mar 13 13:31 ..
 -rw-rw-rwx 1 diegospillo diegospillo    0 Mar 13 13:26 file.txt
 #+END_SRC
 ** mv [-i] [-u] [-f] {filesorgenti} filedestinazione
-   • Sposta un file (o lo rinomina)
-   • -i e -u hanno stesso significato di cp
-   • -f force è il default
+   - Sposta un file (o lo rinomina)
+   - -i e -u hanno stesso significato di cp
+   - -f force è il default
 ** rm [-f] [-i] [-r] {file}
-   • -f forza la cancellazione (senza chiedere)
-   • -r recursive
-   • -i interactive
+   - -f forza la cancellazione (senza chiedere)
+   - -r recursive
+   - -i interactive
 *** esercizio 5
     #+BEGIN_SRC bash
 diegospillo@diegoubuntu:~/prova$ touch file.txt
@@ -320,11 +320,11 @@ diegospillo@diegoubuntu:~/prova$ ls -i file1.txt
 1311323 file1.txt
     #+END_SRC
 ** ln [-s] sorgente [destinazione]
-    • Soft/symbolic e hard link
-    • Un link lin1 ad un file f1 è un nuovo file lin1 che punta ad f1
+    - Soft/symbolic e hard link
+    - Un link lin1 ad un file f1 è un nuovo file lin1 che punta ad f1
       senza contenere in esso il contenuto di f1 (permette di risparmiare spazio)
-    • Default hard link; -s soft link
-    • Negli hard link non c'è il concetto di puntatore e puntato
+    - Default hard link; -s soft link
+    - Negli hard link non c'è il concetto di puntatore e puntato
 *** Definizione
 Permettono di accedere alle stesse informazioni da posizioni diverse senza
 doverle duplicare, risparmiando così moltissimo spazio sul disco rispetto
@@ -345,10 +345,10 @@ Nel caso dell'Hard Link (Fisico): in questo caso lin1 non è nemmeno un vero e p
 Se f1 è un video da 5 GB, creando lin1 (sia hard che soft) non occuperai altri 5 GB.
 Il peso sul disco rimarrà praticamente invariato
 ** touch [-a] [-m] [-t timestamp] {file}
-    • Serve per modificare i timestamps («marcature/timbri temporali») di
+    - Serve per modificare i timestamps («marcature/timbri temporali») di
       un file … e se il file non esiste lo crea
-    • Può essere applicato anche su directory
-    • -t imposta il timestamp desiderato
+    - Può essere applicato anche su directory
+    - -t imposta il timestamp desiderato
 ** du [-c] [-s] [-a] [-h] [--exclude=PATTERN] [files...]
 Il comando base du calcola e mostra lo spazio su disco utilizzato dai file e dalle
 directory che gli indichi.(che sta per Disk Usage)
@@ -491,70 +491,70 @@ device (Il dispositivo bersaglio): Indica fisicamente quale partizione vuoi form
       * Processi -  permettono di elaborare dati e usare le risorse di sistema
     Processo = file eseguibile (programma) in esecuzione
 
-    • Un file eseguibile può essere eseguito più volte dando vita ad un
+    - Un file eseguibile può essere eseguito più volte dando vita ad un
       nuovo processo ogni volta
-    • Non occorre aspettare il termine dell’esecuzione prima di lanciarlo
+    - Non occorre aspettare il termine dell’esecuzione prima di lanciarlo
       nuovamente
-    • Unix/Linux è multi-processo (multitasking)
+    - Unix/Linux è multi-processo (multitasking)
 ** Canali (dispositive/file) standard
      Ogni processo Unix/Linux ha accesso ad almeno TRE canali/file:
-       • Standard input (stdin)
-       • Standard output (stdout)
-       • Standard error (stderr)
+       - Standard input (stdin)
+       - Standard output (stdout)
+       - Standard error (stderr)
 *** stdin: flusso dati in ingresso
-        • default: tastiera
-        • descrittore file: 0
+        - default: tastiera
+        - descrittore file: 0
 *** stdout: flusso dati in uscita
-        • default: schermo
-        • descrittore file: 1
+        - default: schermo
+        - descrittore file: 1
 *** stderr: per eventuali messaggi di errore/diagnostica
-        • default: schermo
-        • descrittore file: 2
+        - default: schermo
+        - descrittore file: 2
     I tre canali possono essere ridirezionati indipendentemente
 ** Ridirezione dei canali standard
-   • I simboli > e < sono utilizzati per ridirezionare standard
+   - I simboli > e < sono utilizzati per ridirezionare standard
      input/output/error di un comando da/su file
-   • Vedi relativa sezione in man bash
-   • Ad esempio:
-      • ls > dirlist (stdout di lsridirezionato sul file dirlist)
-      • ls > dirlist 2>&1 (stdout di lsridirezionato su dirlist, stderr (2)
+   - Vedi relativa sezione in man bash
+   - Ad esempio:
+      - ls > dirlist (stdout di lsridirezionato sul file dirlist)
+      - ls > dirlist 2>&1 (stdout di lsridirezionato su dirlist, stderr (2)
         ridirezionato su stdout (1). Quindi sia standard error sia standard output sono
         ridirezionati su dirlist.)
-      • ls 2>&1 > dirlist (standard error (2) ridirezionato su stdout (1).
+      - ls 2>&1 > dirlist (standard error (2) ridirezionato su stdout (1).
         Standard output di ls ridirezionato su dirlist dopo che stderr è stato
         ridirezionato e quindi dirlist contiene solo lo standard output di ls.) [La
         ridirezione non è transitiva.]
 ** Rappresentazione dei processi
 *** Process IDentifier (PID)
-    • E’ un identificatore (numero intero) univoco di un processo
-    • In un dato istante, non ci possono essere 2 processi con lo stesso PID
-    • Una volta che un processo è terminato, il suo PID viene liberato, e
+    - E’ un identificatore (numero intero) univoco di un processo
+    - In un dato istante, non ci possono essere 2 processi con lo stesso PID
+    - Una volta che un processo è terminato, il suo PID viene liberato, e
       potrebbe essere prima o poi riusato per un altro processo
-    • Alcuni sistemi, Linux incluso, assegnano PID casuali ai processi per
+    - Alcuni sistemi, Linux incluso, assegnano PID casuali ai processi per
       incrementare la sicurezza. [Ad esempio: in un sistema parzialmente
       compromesso, un attacco al processo web server dovrebbe prima di tutto
       scoprire il PID di tale processo.]
-    • Nell’ultima decade aumento dell’uso della casualità (randomness) nei
+    - Nell’ultima decade aumento dell’uso della casualità (randomness) nei
       sistemi operativi per ridurne (mitigate) la superficie d’attacco
 *** Process Control Block (PCB)
      PCB è unico per ogni processo
      * PID: Process Indentifier
      * PPID: Parent Process Identifier
-     • Real UID: Real User Identifier
-     • Real GID: Real Group ID
+     - Real UID: Real User Identifier
+     - Real GID: Real Group ID
      * Effective UID: Effective User Identifier (UID assunto dal processo in esecuzione)
-     • Effective GID: Effective Group ID (come sopra per GID)
+     - Effective GID: Effective Group ID (come sopra per GID)
      * Saved UID: Saved User Identifier (UID avuto prima dell’esecuzione del SetUID)
-     • Saved GID: Saved Group Identifier (come sopra per GID)
-     • Current Working Directory: directory di lavoro corrente
-     • Umask: file mode creation mask
-     • Nice: priorità statica del processo
+     - Saved GID: Saved Group Identifier (come sopra per GID)
+     - Current Working Directory: directory di lavoro corrente
+     - Umask: file mode creation mask
+     - Nice: priorità statica del processo
 **** Saved UID: Saved User Identifier
      Permette ad un processo che gira come root (ad es. via setuid sull’eseguibile)
      di fare operazioni come utente non-privilegiato e poi ritornare ai privilegi di root:
-     • Ad es: il processo crea dei file che apparterranno all’utente non-privilegiato
+     - Ad es: il processo crea dei file che apparterranno all’utente non-privilegiato
        (altrimenti apparterrebbero a root)
-     • E’ buona regola per la sicurezza di usare i privilegi di root solo quando
+     - E’ buona regola per la sicurezza di usare i privilegi di root solo quando
 *** Sei aree di memoria
 **** Text Segment
      Istruzioni da eseguire (in linguaggio macchina)
@@ -617,8 +617,8 @@ diegospillo@diegoubuntu:~$
 [1]+  Completato              sleep 15s
 #+END_SRC
      3894 è in numero del job (partono da 1) e PID
-     • Provate a lanciare 3 volte di seguito sleep 20s &
-     • Cosa succede al numero del job?
+     - Provate a lanciare 3 volte di seguito sleep 20s &
+     - Cosa succede al numero del job?
 #+BEGIN_SRC bash
 diegospillo@diegoubuntu:~$ sleep 20s &
 [1] 3917
@@ -655,12 +655,12 @@ diegospillo@diegoubuntu:~$ jobs -l
       3947                       | sleep 10s &
 #+END_SRC
 **** Comandi bg e fg
-   • Comandi di bash (vedi man bash)
-   • bg porta un processo in background
-   • lancio processo; lo interrompo con CTRL+z; lo risveglio con bg
-   • fg%n dove %n è il numero del
+   - Comandi di bash (vedi man bash)
+   - bg porta un processo in background
+   - lancio processo; lo interrompo con CTRL+z; lo risveglio con bg
+   - fg%n dove %n è il numero del
      job, lo riporta in foreground
-   • bg%n porta in background il
+   - bg%n porta in background il
      processo %n
 #+BEGIN_SRC bash
 diegospillo@diegoubuntu:~/SO2$ cd ..
@@ -682,11 +682,11 @@ sleep 60s
       + %+ oppure %%: l'ultimo job mandato
       + %-: il penultimo job mandato
 **** Comando ps [opzioni] [pid...]
-     • Mostra le informazioni dei processi in esecuzione
-     • Legge le informazioni dai file virtuali in /proc
-     • ps senza argomenti mostra i processi dell’utente attuale lanciati
+     - Mostra le informazioni dei processi in esecuzione
+     - Legge le informazioni dai file virtuali in /proc
+     - ps senza argomenti mostra i processi dell’utente attuale lanciati
        dalla shell corrente
-     • Per ogni processo mostra
+     - Per ogni processo mostra
        PID, TTY, TIME e CMD
 #+BEGIN_SRC bash
 diegospillo@diegoubuntu:~$ ps
@@ -705,11 +705,11 @@ diegospillo@diegoubuntu:~$ ps
    3799 pts/2    00:00:00 ps
 #+END_SRC
 ***** Opzioni ps [-e] [-u] [-p]
-      •-e: tutti i processi di tutti gli utenti lanciati da tutte le shell o al boot
+      --e: tutti i processi di tutti gli utenti lanciati da tutte le shell o al boot
            (figli del processo 0)
-      •-u{utente, }: tutti i processi degli utenti nella lista
-          • Es: ps -u studente
-      •-p {pid, }: tutti i processi con i PID nella lista
+      --u{utente, }: tutti i processi degli utenti nella lista
+          - Es: ps -u studente
+      --p {pid, }: tutti i processi con i PID nella lista
 ***** Opzioni ps [-f] [-l] [-o]
 #+BEGIN_SRC bash
 diegospillo@diegoubuntu:~$ ps
@@ -735,16 +735,16 @@ F S   UID     PID    PPID  C PRI  NI ADDR SZ WCHAN  TTY          TIME CMD
       del comando successivo
     * il comando i+1 non deve necessariamente usare l'output/stderr del comando i
 **** Esercizio 1
-   • Lanciare 3 comandi ed interromperli ogni volta con CTRL+z, ad
+   - Lanciare 3 comandi ed interromperli ogni volta con CTRL+z, ad
      esempio
-   • sleep 60s CTRL+z
-   • ls -R / CTRL+z
-   • sleep 10s CTRL+z
-   • Come faccio a riportare in esecuzione in background ls?
-   • prima cercate di capire come si fa e poi fatelo per evitare che lstermini!!!!
-   • Perché continuo a vedere l’output di ls dopo averlo riportato in
+   - sleep 60s CTRL+z
+   - ls -R / CTRL+z
+   - sleep 10s CTRL+z
+   - Come faccio a riportare in esecuzione in background ls?
+   - prima cercate di capire come si fa e poi fatelo per evitare che lstermini!!!!
+   - Perché continuo a vedere l’output di ls dopo averlo riportato in
      esecuzione?
-   • Ovviamente potete scegliere di eseguire 3 comandi a piacere
+   - Ovviamente potete scegliere di eseguire 3 comandi a piacere
      Soluzonione:
 
      *** Il comnado ls eseguito in bg non prende nulla in input ma mostra ***
